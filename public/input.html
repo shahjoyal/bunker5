@@ -605,13 +605,13 @@ html, body {
   <script>
 if(localStorage.getItem('isLoggedIn') !== 'true') {
     alert('You must login first!');
-    window.location.href = '/login.html'; 
+    window.location.href = '/public/login.html'; 
 } else {
     document.body.style.display = 'block';
 }
     function logoutUser() {
   localStorage.setItem('isLoggedIn', 'false'); 
-  window.location.href = 'login.html'; 
+  window.location.href = '/public/login.html'; 
 }
 </script>
 </head>
@@ -1200,3 +1200,4 @@ function updateBunkerColors() {
 
 </body>
 </html>
+
