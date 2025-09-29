@@ -1,4 +1,5 @@
-const API_BASE = 'http://localhost:5000/api';
+const API_BASE = window.location.origin + '/api';
+
 
 let latestBlendId = null; // store latest blend ID
 
@@ -82,3 +83,4 @@ document.addEventListener('DOMContentLoaded', () => {
     console.warn('No #saveBtn found. Add <button id="saveBtn">Submit</button> to use database save.');
   }
 });
+
