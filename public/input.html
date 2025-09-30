@@ -605,13 +605,13 @@ html, body {
   <script>
 if(localStorage.getItem('isLoggedIn') !== 'true') {
     alert('You must login first!');
-    window.location.href = '/public/login.html'; 
+    window.location.href = '/login.html'; 
 } else {
     document.body.style.display = 'block';
 }
     function logoutUser() {
   localStorage.setItem('isLoggedIn', 'false'); 
-  window.location.href = '/public/login.html'; 
+  window.location.href = 'login.html'; 
 }
 </script>
 </head>
@@ -628,17 +628,16 @@ if(localStorage.getItem('isLoggedIn') !== 'true') {
   </div>
 
   <div style="margin-top:8px;">
-    <!-- Replaced upload with Go Back button (same style & location) -->
     <button id="saveBtn" class="upload-btn">Submit</button>
   </div>
 
   <div id="loader">Loading... please wait</div>
 <button id="downloadPDF" class="icon-btn" title="Download page as PDF">⬇️</button>
+
   <div class="main-container">
     <div class="mills-grid" id="millsGrid">
       <!-- header row -->
       <div></div>
-      <!-- changed headers to BUNKER 1..6 -->
       <div class="mill green">BUNKER 1</div>
       <div class="mill green">BUNKER 2</div>
       <div class="mill green">BUNKER 3</div>
@@ -648,8 +647,13 @@ if(localStorage.getItem('isLoggedIn') !== 'true') {
       <div class="mill gcv">GCV(Kcal/kg)</div>
       <div class="mill cost-head">Cost/MT</div>
 
-      <!-- Row 1: Coal name input & % under mills -->
-      <div class="mill"><input type="text" class="dropdown" id="coalName1" placeholder="Coal name"></div>
+      <!-- Row 1: Coal name select & % under mills -->
+      <div class="mill">
+        <!-- changed to SELECT (keeps same id & class) -->
+        <select class="dropdown" id="coalName1">
+          <option value="">Select coal</option>
+        </select>
+      </div>
       <div class="mill"><input type="text" class="percentage-input" data-row="1" data-mill="0" placeholder="%"></div>
       <div class="mill"><input type="text" class="percentage-input" data-row="1" data-mill="1" placeholder="%"></div>
       <div class="mill"><input type="text" class="percentage-input" data-row="1" data-mill="2" placeholder="%"></div>
@@ -659,8 +663,12 @@ if(localStorage.getItem('isLoggedIn') !== 'true') {
       <div class="mill"><input type="text" id="gcvBox1" class="gcv-box" placeholder="GCV"></div>
       <div class="mill"><input type="text" id="costBox1" class="cost-input" placeholder="Cost/MT"></div>
 
-      <!-- Row 2: Coal name input -->
-      <div class="mill"><input type="text" class="dropdown" id="coalName2" placeholder="Coal name"></div>
+      <!-- Row 2 -->
+      <div class="mill">
+        <select class="dropdown" id="coalName2">
+          <option value="">Select coal</option>
+        </select>
+      </div>
       <div class="mill"><input type="text" class="percentage-input" data-row="2" data-mill="0" placeholder="%"></div>
       <div class="mill"><input type="text" class="percentage-input" data-row="2" data-mill="1" placeholder="%"></div>
       <div class="mill"><input type="text" class="percentage-input" data-row="2" data-mill="2" placeholder="%"></div>
@@ -670,8 +678,12 @@ if(localStorage.getItem('isLoggedIn') !== 'true') {
       <div class="mill"><input type="text" id="gcvBox2" class="gcv-box" placeholder="GCV"></div>
       <div class="mill"><input type="text" id="costBox2" class="cost-input" placeholder="Cost/MT"></div>
 
-      <!-- Row 3: Coal name input -->
-      <div class="mill"><input type="text" class="dropdown" id="coalName3" placeholder="Coal name"></div>
+      <!-- Row 3 -->
+      <div class="mill">
+        <select class="dropdown" id="coalName3">
+          <option value="">Select coal</option>
+        </select>
+      </div>
       <div class="mill"><input type="text" class="percentage-input" data-row="3" data-mill="0" placeholder="%"></div>
       <div class="mill"><input type="text" class="percentage-input" data-row="3" data-mill="1" placeholder="%"></div>
       <div class="mill"><input type="text" class="percentage-input" data-row="3" data-mill="2" placeholder="%"></div>
@@ -681,62 +693,32 @@ if(localStorage.getItem('isLoggedIn') !== 'true') {
       <div class="mill"><input type="text" id="gcvBox3" class="gcv-box" placeholder="GCV"></div>
       <div class="mill"><input type="text" id="costBox3" class="cost-input" placeholder="Cost/MT"></div>
 
-      <!-- NEW: Diagram row placed inside the grid so it aligns with Bunker 1..6 columns -->
+      <!-- diagram, flows, aft rows unchanged -->
       <div></div>
       <div class="diagram-in-grid" style="padding:8px;">
         <div class="layout">
           <div class="top-line"></div>
-    <div class="arrow" style="height:60px; left:40px;"></div>
-    <div class="arrow" style="height:60px; left:150px;"></div>
-    <div class="arrow" style="height:60px; left:255px;"></div>
-    <div class="arrow" style="height:60px; left:365px;"></div>
-    <div class="arrow" style="height:60px; left:470px;"></div>
-    <div class="arrow" style="height:60px; left:580px;"></div>
+          <div class="arrow" style="height:60px; left:40px;"></div>
+          <div class="arrow" style="height:60px; left:150px;"></div>
+          <div class="arrow" style="height:60px; left:255px;"></div>
+          <div class="arrow" style="height:60px; left:365px;"></div>
+          <div class="arrow" style="height:60px; left:470px;"></div>
+          <div class="arrow" style="height:60px; left:580px;"></div>
 
           <div class="bunkers-grid">
-            <div class="bunker">
-              <svg viewBox="0 0 100 150" preserveAspectRatio="xMidYMid meet">
-                <path d="M10 10 V100 L45 140 M55 140 L90 100 V10" />
-              </svg>
-              <div class="label">Bunker 1</div>
-            </div>
-            <div class="bunker">
-              <svg viewBox="0 0 100 150" preserveAspectRatio="xMidYMid meet">
-                <path d="M10 10 V100 L45 140 M55 140 L90 100 V10" />
-              </svg>
-              <div class="label">Bunker 2</div>
-            </div>
-            <div class="bunker">
-              <svg viewBox="0 0 100 150" preserveAspectRatio="xMidYMid meet">
-                <path d="M10 10 V100 L45 140 M55 140 L90 100 V10" />
-              </svg>
-              <div class="label">Bunker 3</div>
-            </div>
-            <div class="bunker">
-              <svg viewBox="0 0 100 150" preserveAspectRatio="xMidYMid meet">
-                <path d="M10 10 V100 L45 140 M55 140 L90 100 V10" />
-              </svg>
-              <div class="label">Bunker 4</div>
-            </div>
-            <div class="bunker">
-              <svg viewBox="0 0 100 150" preserveAspectRatio="xMidYMid meet">
-                <path d="M10 10 V100 L45 140 M55 140 L90 100 V10" />
-              </svg>
-              <div class="label">Bunker 5</div>
-            </div>
-            <div class="bunker">
-              <svg viewBox="0 0 100 150" preserveAspectRatio="xMidYMid meet">
-                <path d="M10 10 V100 L45 140 M55 140 L90 100 V10" />
-              </svg>
-              <div class="label">Bunker 6</div>
-            </div>
+            <!-- six bunkers (same as before) -->
+            <div class="bunker"><svg viewBox="0 0 100 150" preserveAspectRatio="xMidYMid meet"><path d="M10 10 V100 L45 140 M55 140 L90 100 V10" /></svg><div class="label">Bunker 1</div></div>
+            <div class="bunker"><svg viewBox="0 0 100 150" preserveAspectRatio="xMidYMid meet"><path d="M10 10 V100 L45 140 M55 140 L90 100 V10" /></svg><div class="label">Bunker 2</div></div>
+            <div class="bunker"><svg viewBox="0 0 100 150" preserveAspectRatio="xMidYMid meet"><path d="M10 10 V100 L45 140 M55 140 L90 100 V10" /></svg><div class="label">Bunker 3</div></div>
+            <div class="bunker"><svg viewBox="0 0 100 150" preserveAspectRatio="xMidYMid meet"><path d="M10 10 V100 L45 140 M55 140 L90 100 V10" /></svg><div class="label">Bunker 4</div></div>
+            <div class="bunker"><svg viewBox="0 0 100 150" preserveAspectRatio="xMidYMid meet"><path d="M10 10 V100 L45 140 M55 140 L90 100 V10" /></svg><div class="label">Bunker 5</div></div>
+            <div class="bunker"><svg viewBox="0 0 100 150" preserveAspectRatio="xMidYMid meet"><path d="M10 10 V100 L45 140 M55 140 L90 100 V10" /></svg><div class="label">Bunker 6</div></div>
           </div>
         </div>
       </div>
       <div ></div>
       <div ></div>
 
-      <!-- Row 4: Coal Flow (moved down because diagram inserted above) -->
       <div class="mill coal-flow">Coal Flow(TPH)</div>
       <div class="mill"><input type="text" class="flow-input" data-mill="0" placeholder="TPH"></div>
       <div class="mill"><input type="text" class="flow-input" data-mill="1" placeholder="TPH"></div>
@@ -747,7 +729,6 @@ if(localStorage.getItem('isLoggedIn') !== 'true') {
       <div></div>
       <div></div>
 
-      <!-- Row 5: AFT (calculated per mill) -->
       <div class="mill aft-head">AFT(°C)</div>
       <div class="mill aft" data-mill="0">--</div>
       <div class="mill aft" data-mill="1">--</div>
@@ -758,10 +739,8 @@ if(localStorage.getItem('isLoggedIn') !== 'true') {
       <div></div>
       <div></div>
     </div>
-
   </div>
 
-<!-- Summary moved out of diagram-row; class name preserved but it is fixed to the right side -->
 <div class="summary-table" aria-hidden="false">
   <div class="summary-cell summary-header">Generation (MW)</div>
   <div class="summary-cell"><input id="generation" class="generation-input" placeholder="MW" /></div>
@@ -782,44 +761,58 @@ if(localStorage.getItem('isLoggedIn') !== 'true') {
   <div class="summary-cell" id="COSTRATE">--</div>
 </div>
 
+<!-- Calculation script (keeps all existing logic but now pulls oxide/GCV/cost from DB if available) -->
 <script>
-  // removed excel handling — user inputs for coal names and GCVs are used instead.
-
-  // AFT formula exactly as provided (returns a number)
+  // AFT calculator (unchanged formulas) - returns number
   function calcAFT(ox){
     const total = Object.values(ox).reduce((a,b)=>a+b,0);
     if(total === 0) return 0;
-    const sum = (ox["SiO₂"]||0) + (ox["Al₂O₃"]||0);
+    const sum = (ox["SiO2"]||0) + (ox["Al2O3"]||0);
     let aft = 0;
     if(sum < 55){
-      aft = 1245 + (1.1*(ox["SiO₂"]||0)) + (0.95*(ox["Al₂O₃"]||0)) - (2.5*(ox["Fe₂O₃"]||0)) - (2.98*(ox["CaO"]||0)) - (4.5*(ox["MgO"]||0)) - (7.89*((ox["Na₂O"]||0) + (ox["K₂O"]||0))) - (1.7*(ox["SO₃"]||0)) - (0.63*(ox["TiO₂"]||0));
+      aft = 1245 + (1.1*(ox["SiO2"]||0)) + (0.95*(ox["Al2O3"]||0)) - (2.5*(ox["Fe2O3"]||0)) - (2.98*(ox["CaO"]||0)) - (4.5*(ox["MgO"]||0)) - (7.89*((ox["Na2O"]||0) + (ox["K2O"]||0))) - (1.7*(ox["SO3"]||0)) - (0.63*(ox["TiO2"]||0));
     } else if(sum < 75){
-      aft = 1323 + (1.45*(ox["SiO₂"]||0)) + (0.683*(ox["Al₂O₃"]||0)) - (2.39*(ox["Fe₂O₃"]||0)) - (3.1*(ox["CaO"]||0)) - (4.5*(ox["MgO"]||0)) - (7.49*((ox["Na₂O"]||0) + (ox["K₂O"]||0))) - (2.1*(ox["SO₃"]||0)) - (0.63*(ox["TiO₂"]||0));
+      aft = 1323 + (1.45*(ox["SiO2"]||0)) + (0.683*(ox["Al2O3"]||0)) - (2.39*(ox["Fe2O3"]||0)) - (3.1*(ox["CaO"]||0)) - (4.5*(ox["MgO"]||0)) - (7.49*((ox["Na2O"]||0) + (ox["K2O"]||0))) - (2.1*(ox["SO3"]||0)) - (0.63*(ox["TiO2"]||0));
     } else {
-      aft = 1395 + (1.2*(ox["SiO₂"]||0)) + (0.9*(ox["Al₂O₃"]||0)) - (2.5*(ox["Fe₂O₃"]||0)) - (3.1*(ox["CaO"]||0)) - (4.5*(ox["MgO"]||0)) - (7.2*((ox["Na₂O"]||0) + (ox["K₂O"]||0))) - (1.7*(ox["SO₃"]||0)) - (0.63*(ox["TiO₂"]||0));
+      aft = 1395 + (1.2*(ox["SiO2"]||0)) + (0.9*(ox["Al2O3"]||0)) - (2.5*(ox["Fe2O3"]||0)) - (3.1*(ox["CaO"]||0)) - (4.5*(ox["MgO"]||0)) - (7.2*((ox["Na2O"]||0) + (ox["K2O"]||0))) - (1.7*(ox["SO3"]||0)) - (0.63*(ox["TiO2"]||0));
     }
     return Number(aft);
   }
 
-  // main calculations: per-mill blended GCV, per-mill AFT, totals & averages
+  // helper to get coal object (from window.COAL_DB) for a given row index 1..3
+  function getCoalObjForRow(r) {
+    const sel = document.getElementById(`coalName${r}`);
+    if(!sel) return null;
+    const val = sel.value;
+    if(!val) return null;
+    const db = window.COAL_DB || [];
+    // match by _id first, then by name
+    let found = db.find(c => String(c._id) === String(val));
+    if(!found) found = db.find(c => String(c.coal || '').toLowerCase() === String(val).toLowerCase());
+    return found || null;
+  }
+
+  // main calculations: blended GCV, AFT, totals & averages
   function calculateBlended(){
-    // coal names (kept but not used for numeric calculations here)
-    const coal1Name = document.getElementById("coalName1").value;
-    const coal2Name = document.getElementById("coalName2").value;
-    const coal3Name = document.getElementById("coalName3").value;
+    // GCV inputs - prefer manual input; if empty and DB present use DB value
+    const gcv1_input = document.getElementById("gcvBox1");
+    const gcv2_input = document.getElementById("gcvBox2");
+    const gcv3_input = document.getElementById("gcvBox3");
 
-    // GCV inputs entered by user
-    const gcv1 = parseFloat(document.getElementById("gcvBox1").value) || 0;
-    const gcv2 = parseFloat(document.getElementById("gcvBox2").value) || 0;
-    const gcv3 = parseFloat(document.getElementById("gcvBox3").value) || 0;
+    const coal1 = getCoalObjForRow(1);
+    const coal2 = getCoalObjForRow(2);
+    const coal3 = getCoalObjForRow(3);
 
-    // oxide keys (not provided by user, so treated as zero)
-    const oxKeys = ["SiO₂","Al₂O₃","Fe₂O₃","CaO","MgO","Na₂O","K₂O","SO₃","TiO₂"];
+    const gcv1 = (gcv1_input && gcv1_input.value.trim() !== "") ? (parseFloat(gcv1_input.value) || 0) : ((coal1 && (coal1.gcv || coal1.GCV)) ? (parseFloat(coal1.gcv || coal1.GCV) || 0) : 0);
+    const gcv2 = (gcv2_input && gcv2_input.value.trim() !== "") ? (parseFloat(gcv2_input.value) || 0) : ((coal2 && (coal2.gcv || coal2.GCV)) ? (parseFloat(coal2.gcv || coal2.GCV) || 0) : 0);
+    const gcv3 = (gcv3_input && gcv3_input.value.trim() !== "") ? (parseFloat(gcv3_input.value) || 0) : ((coal3 && (coal3.gcv || coal3.GCV)) ? (parseFloat(coal3.gcv || coal3.GCV) || 0) : 0);
+
+    const oxKeys = ["SiO2","Al2O3","Fe2O3","CaO","MgO","Na2O","K2O","SO3","TiO2"];
 
     let totalFlow = 0;
     let weightedGCV = 0;
     let weightedAFT = 0;
-    let contributedAFTFlow = 0; // flow that contributed to aft average
+    let contributedAFTFlow = 0;
 
     for(let m = 0; m < 6; m++){
       const p1 = parseFloat( document.querySelector(`.percentage-input[data-row="1"][data-mill="${m}"]`)?.value ) || 0;
@@ -828,18 +821,21 @@ if(localStorage.getItem('isLoggedIn') !== 'true') {
 
       const blendedGCV = (gcv1 * (p1/100)) + (gcv2 * (p2/100)) + (gcv3 * (p3/100));
 
-      // oxides unavailable -> treated as 0 for each coal -> overall ox sum = 0
-      let ox = {};
+      // build oxide blend for this mill using DB values (if available) and percentage weights
+      const ox = {};
       let oxTotal = 0;
       oxKeys.forEach(k => {
-        ox[k] = 0;
-        oxTotal += 0;
+        const v1 = coal1 ? (coal1[k] !== undefined ? (parseFloat(coal1[k]) || 0) : 0) : 0;
+        const v2 = coal2 ? (coal2[k] !== undefined ? (parseFloat(coal2[k]) || 0) : 0) : 0;
+        const v3 = coal3 ? (coal3[k] !== undefined ? (parseFloat(coal3[k]) || 0) : 0) : 0;
+        const blended = (v1 * (p1/100)) + (v2 * (p2/100)) + (v3 * (p3/100));
+        ox[k] = blended;
+        oxTotal += blended;
       });
 
       const aftCell = document.querySelector(`.aft[data-mill="${m}"]`);
       if(aftCell){
         if(oxTotal === 0){
-          // no oxide data -> show placeholder (same behavior as before)
           aftCell.innerText = "--";
         } else {
           const aftVal = calcAFT(ox);
@@ -853,7 +849,6 @@ if(localStorage.getItem('isLoggedIn') !== 'true') {
         totalFlow += flow;
         weightedGCV += (flow * blendedGCV);
 
-        // only add to weightedAFT if we have a numeric aft value (we don't here)
         const aftText = aftCell ? aftCell.innerText : "--";
         const aftValNumeric = (aftText !== "--") ? (parseFloat(aftText) || 0) : null;
         if(aftValNumeric !== null){
@@ -882,14 +877,15 @@ if(localStorage.getItem('isLoggedIn') !== 'true') {
       let total = 0;
       for (let m = 0; m < 6; m++) {
         const perc = parseFloat(document.querySelector(`.percentage-input[data-row="${rowIndex}"][data-mill="${m}"]`)?.value) || 0;
-        total += perc; 
+        total += perc;
       }
       return total;
     }
 
-    const cost1 = parseFloat(document.getElementById("costBox1").value) || 0;
-    const cost2 = parseFloat(document.getElementById("costBox2").value) || 0;
-    const cost3 = parseFloat(document.getElementById("costBox3").value) || 0;
+    // cost: prefer manual input; fallback to DB cost if present
+    const cost1 = (document.getElementById("costBox1")?.value.trim() !== "") ? (parseFloat(document.getElementById("costBox1").value) || 0) : ((coal1 && (coal1.cost || coal1.Cost)) ? (parseFloat(coal1.cost || coal1.Cost) || 0) : 0);
+    const cost2 = (document.getElementById("costBox2")?.value.trim() !== "") ? (parseFloat(document.getElementById("costBox2").value) || 0) : ((coal2 && (coal2.cost || coal2.Cost)) ? (parseFloat(coal2.cost || coal2.Cost) || 0) : 0);
+    const cost3 = (document.getElementById("costBox3")?.value.trim() !== "") ? (parseFloat(document.getElementById("costBox3").value) || 0) : ((coal3 && (coal3.cost || coal3.Cost)) ? (parseFloat(coal3.cost || coal3.Cost) || 0) : 0);
 
     const qty1 = getCoalQty(1);
     const qty2 = getCoalQty(2);
@@ -902,12 +898,10 @@ if(localStorage.getItem('isLoggedIn') !== 'true') {
     document.getElementById("COSTRATE").innerText = costRate.toFixed(2);
   }
 
-  // new: validate sums and update header colors
+  // roughly same validation & bunker color logic (kept as before)
   function validateMillPercentages() {
     for (let m = 0; m < 6; m++) {
       let hasPercent = false;
-
-      // check if any percent input > 0 for this mill
       for (let r = 1; r <= 3; r++) {
         const val = parseFloat(
           document.querySelector(`.percentage-input[data-row="${r}"][data-mill="${m}"]`)?.value
@@ -918,7 +912,6 @@ if(localStorage.getItem('isLoggedIn') !== 'true') {
         }
       }
 
-      // check the coal flow for this mill
       const flow = parseFloat(
         document.querySelector(`.flow-input[data-mill="${m}"]`)?.value
       ) || 0;
@@ -927,8 +920,6 @@ if(localStorage.getItem('isLoggedIn') !== 'true') {
         .find(el => el.textContent.trim().startsWith(`BUNKER ${m+1}`));
 
       if (!header) continue;
-
-      // reset
       header.classList.remove("red", "green");
 
       if (hasPercent && flow > 0) {
@@ -939,14 +930,12 @@ if(localStorage.getItem('isLoggedIn') !== 'true') {
     }
   }
 
+  // attach handlers & auto update (kept from original file, but now works with select dropdowns)
   function attachAutoUpdate(){
-    // add focus + input handlers for percentage inputs to track previous value and validate
     document.querySelectorAll(".percentage-input").forEach(inp => {
-      // store initial prev value
       inp.dataset.prev = inp.value || "";
 
       inp.addEventListener("focus", function(e){
-        // store previous value before editing
         this.dataset.prev = this.value;
       });
 
@@ -955,7 +944,6 @@ if(localStorage.getItem('isLoggedIn') !== 'true') {
         let num = parseFloat(raw);
         if (raw === "" || isNaN(num)) num = 0;
 
-        // compute new sum for this mill
         const millIndex = Number(this.dataset.mill);
         let sum = 0;
         for (let r = 1; r <=3; r++){
@@ -964,240 +952,151 @@ if(localStorage.getItem('isLoggedIn') !== 'true') {
         }
 
         if (sum > 100) {
-          // revert to previous value and notify
           const prev = this.dataset.prev ?? "";
           this.value = prev;
           alert(`Total for Mill ${String.fromCharCode(65+millIndex)} cannot exceed 100%.`);
-          // update blended calculations and header colors after revert
           calculateBlended();
           validateMillPercentages();
           updateBunkerColors();
           return;
         }
 
-        // valid, save as prev
         this.dataset.prev = this.value;
-        // update calculations & visuals
         calculateBlended();
         validateMillPercentages();
         updateBunkerColors();
       });
     });
 
-    // inputs that affect calculation
     document.querySelectorAll(".flow-input, #generation, .cost-input, .gcv-box, .dropdown").forEach(inp => {
       inp.addEventListener("input", () => { calculateBlended(); validateMillPercentages(); updateBunkerColors(); });
+      inp.addEventListener("change", () => { calculateBlended(); validateMillPercentages(); updateBunkerColors(); });
     });
 
-    // initial update
     calculateBlended();
     validateMillPercentages();
     updateBunkerColors();
   }
 
-  // allow the upload-btn (now Go Back) to keep same style - already a button
-  attachAutoUpdate();
+  // bunker display (unchanged)
+  function updateBunkerColors() {
+    const coalColors = ["#f39c12", "#3498db", "#2ecc71"];
+    const numBunkers = 6;
+    const svgWidth = 100;
+    const svgHeight = 150;
+    const topY = 10;
+    const midY = 100;
+    const bottomY = 140;
+    const usableH = bottomY - topY;
+    const outlinePath = `M10 ${topY} L10 ${midY} L45 ${bottomY} L55 ${bottomY} L90 ${midY} L90 ${topY} Z`;
 
- document.getElementById("downloadPDF").addEventListener("click", function () {
-  const { jsPDF } = window.jspdf;
-  const element = document.body; // ✅ capture whole page including navbar
+    for (let b = 0; b < numBunkers; b++) {
+      const bunker = document.querySelectorAll(".bunker")[b];
+      if (!bunker) continue;
+      const svg = bunker.querySelector("svg");
+      if (!svg) continue;
 
-  html2canvas(element, {
-    scale: 2,
-    useCORS: true,
-    onclone: (clonedDoc) => {
-      // Handle input & textarea values
-      const inputs = clonedDoc.querySelectorAll("input, textarea");
-      inputs.forEach(input => {
-        const text = clonedDoc.createElement("span");
-        text.textContent = input.value;
+      const p1 = parseFloat(document.querySelector(`.percentage-input[data-row="1"][data-mill="${b}"]`)?.value) || 0;
+      const p2 = parseFloat(document.querySelector(`.percentage-input[data-row="2"][data-mill="${b}"]`)?.value) || 0;
+      const p3 = parseFloat(document.querySelector(`.percentage-input[data-row="3"][data-mill="${b}"]`)?.value) || 0;
+      const percentages = [p1, p2, p3];
 
-        text.style.position = "absolute";
-        text.style.left = (input.offsetLeft) + "px";
-        text.style.top = (input.offsetTop) + "px";
-        text.style.width = input.offsetWidth + "px";
-        text.style.height = input.offsetHeight + "px";
-        text.style.lineHeight = input.offsetHeight + "px";
-        text.style.textAlign = "center";
-        text.style.font = window.getComputedStyle(input).font;
-        text.style.color = window.getComputedStyle(input).color;
+      const clipId = `clip-bunker-${b}`;
+      let svgInner = `<defs><clipPath id="${clipId}"><path d="${outlinePath}" /></clipPath></defs>`;
 
-        clonedDoc.body.appendChild(text);
-        input.style.visibility = "hidden";
-      });
+      let cumHeight = 0;
+      const rects = [];
+      for (let i = 0; i < percentages.length; i++) {
+        const pct = Math.max(0, Math.min(100, percentages[i]));
+        if (pct === 0) continue;
+        const h = (pct / 100) * usableH;
+        const y = bottomY - (cumHeight + h);
+        cumHeight += h;
+        rects.push(`<rect x="0" y="${y}" width="${svgWidth}" height="${h}" fill="${coalColors[i]}" clip-path="url(#${clipId})" />`);
+      }
+      svgInner += rects.join("\n");
+      svgInner += `<path d="M10 ${topY} L10 ${midY}" stroke="black" fill="none" stroke-width="2" />`;
+      svgInner += `<path d="M90 ${topY} L90 ${midY}" stroke="black" fill="none" stroke-width="2" />`;
+      svgInner += `<path d="M10 ${midY} L45 ${bottomY}" stroke="black" fill="none" stroke-width="2" />`;
+      svgInner += `<path d="M90 ${midY} L55 ${bottomY}" stroke="black" fill="none" stroke-width="2" />`;
 
-      // Handle select dropdowns (if any) - none in this version but keep for compatibility
-      const selects = clonedDoc.querySelectorAll("select");
-      selects.forEach(select => {
-        const selectedText = select.options[select.selectedIndex]?.text || "";
-        const text = clonedDoc.createElement("span");
-        text.textContent = selectedText;
-
-        text.style.position = "absolute";
-        text.style.left = select.offsetLeft + "px";
-        text.style.top = select.offsetTop + "px";
-        text.style.width = select.offsetWidth + "px";
-        text.style.height = select.offsetHeight + "px";
-        text.style.lineHeight = select.offsetHeight + "px";
-        text.style.textAlign = "center";
-        text.style.font = window.getComputedStyle(select).font;
-        text.style.color = window.getComputedStyle(select).color;
-
-        clonedDoc.body.appendChild(text);
-        select.style.visibility = "hidden";
-      });
+      svg.setAttribute("viewBox", `0 0 ${svgWidth} ${svgHeight}`);
+      svg.innerHTML = svgInner;
     }
-  }).then(canvas => {
-    const imgData = canvas.toDataURL("image/png");
-    const pdf = new jsPDF("p", "mm", "a4");
+  }
 
-    const pageWidth = pdf.internal.pageSize.getWidth();
-    const pageHeight = pdf.internal.pageSize.getHeight();
+  // initialize auto-update after DOM is ready
+  document.addEventListener('DOMContentLoaded', function(){
+    attachAutoUpdate();
+  });
 
-    const imgWidth = pageWidth;
-    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+  // PDF download logic (unchanged) - keep the existing behavior
+  document.getElementById("downloadPDF").addEventListener("click", function () {
+    const { jsPDF } = window.jspdf;
+    const element = document.body;
+    html2canvas(element, {
+      scale: 2,
+      useCORS: true,
+      onclone: (clonedDoc) => {
+        const inputs = clonedDoc.querySelectorAll("input, textarea");
+        inputs.forEach(input => {
+          const text = clonedDoc.createElement("span");
+          text.textContent = input.value;
+          text.style.position = "absolute";
+          text.style.left = (input.offsetLeft) + "px";
+          text.style.top = (input.offsetTop) + "px";
+          text.style.width = input.offsetWidth + "px";
+          text.style.height = input.offsetHeight + "px";
+          text.style.lineHeight = input.offsetHeight + "px";
+          text.style.textAlign = "center";
+          text.style.font = window.getComputedStyle(input).font;
+          text.style.color = window.getComputedStyle(input).color;
+          clonedDoc.body.appendChild(text);
+          input.style.visibility = "hidden";
+        });
 
-    let heightLeft = imgHeight;
-    let position = 0;
-
-    pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
-    heightLeft -= pageHeight;
-
-    while (heightLeft > 0) {
-      position = heightLeft - imgHeight;
-      pdf.addPage();
+        const selects = clonedDoc.querySelectorAll("select");
+        selects.forEach(select => {
+          const selectedText = select.options[select.selectedIndex]?.text || "";
+          const text = clonedDoc.createElement("span");
+          text.textContent = selectedText;
+          text.style.position = "absolute";
+          text.style.left = select.offsetLeft + "px";
+          text.style.top = select.offsetTop + "px";
+          text.style.width = select.offsetWidth + "px";
+          text.style.height = select.offsetHeight + "px";
+          text.style.lineHeight = select.offsetHeight + "px";
+          text.style.textAlign = "center";
+          text.style.font = window.getComputedStyle(select).font;
+          text.style.color = window.getComputedStyle(select).color;
+          clonedDoc.body.appendChild(text);
+          select.style.visibility = "hidden";
+        });
+      }
+    }).then(canvas => {
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF("p", "mm", "a4");
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const imgWidth = pageWidth;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      let heightLeft = imgHeight;
+      let position = 0;
       pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
       heightLeft -= pageHeight;
-    }
-
-    pdf.save("Coal_Blending_Ratio.pdf");
-  });
-});
-
-
-// draws bunker fills based on percentage inputs (unchanged logic)
-function updateBunkerColors() {
-  const coalColors = ["#f39c12", "#3498db", "#2ecc71"]; // row 1,2,3
-  const numBunkers = 6;
-
-  // Coordinates (same scale as your SVG viewBox)
-  const svgWidth = 100;
-  const svgHeight = 150;
-  const topY = 10;
-  const midY = 100;   // where sides start slanting
-  const bottomY = 140;
-  const usableH = bottomY - topY; // 130
-
-  // closed outline used only for clipping (fills)
-  const outlinePath = `M10 ${topY} L10 ${midY} L45 ${bottomY} L55 ${bottomY} L90 ${midY} L90 ${topY} Z`;
-
-  for (let b = 0; b < numBunkers; b++) {
-    const bunker = document.querySelectorAll(".bunker")[b];
-    if (!bunker) continue;
-    const svg = bunker.querySelector("svg");
-    if (!svg) continue;
-
-    // read percentages
-    const p1 = parseFloat(document.querySelector(`.percentage-input[data-row="1"][data-mill="${b}"]`)?.value) || 0;
-    const p2 = parseFloat(document.querySelector(`.percentage-input[data-row="2"][data-mill="${b}"]`)?.value) || 0;
-    const p3 = parseFloat(document.querySelector(`.percentage-input[data-row="3"][data-mill="${b}"]`)?.value) || 0;
-    const percentages = [p1, p2, p3];
-
-    // build svg content
-    const clipId = `clip-bunker-${b}`;
-    let svgInner = `<defs><clipPath id="${clipId}"><path d="${outlinePath}" /></clipPath></defs>`;
-
-    // stacking from bottom up
-    let cumHeight = 0;
-    const rects = [];
-    for (let i = 0; i < percentages.length; i++) {
-      const pct = Math.max(0, Math.min(100, percentages[i]));
-      if (pct === 0) continue;
-      const h = (pct / 100) * usableH;
-      const y = bottomY - (cumHeight + h);
-      cumHeight += h;
-      // full-width rect clipped by the bunker clipPath
-      rects.push(`<rect x="0" y="${y}" width="${svgWidth}" height="${h}" fill="${coalColors[i]}" clip-path="url(#${clipId})" />`);
-    }
-    svgInner += rects.join("\n");
-
-    // draw outline segments (only the lines you want)
-    svgInner += `<path d="M10 ${topY} L10 ${midY}" stroke="black" fill="none" stroke-width="2" />`;
-    svgInner += `<path d="M90 ${topY} L90 ${midY}" stroke="black" fill="none" stroke-width="2" />`;
-    svgInner += `<path d="M10 ${midY} L45 ${bottomY}" stroke="black" fill="none" stroke-width="2" />`;
-    svgInner += `<path d="M90 ${midY} L55 ${bottomY}" stroke="black" fill="none" stroke-width="2" />`;
-
-    svg.setAttribute("viewBox", `0 0 ${svgWidth} ${svgHeight}`);
-    svg.innerHTML = svgInner;
-  }
-}
-</script>
-<!-- paste into input.html (before </body>) -->
-<script>
-(function(){
-  const STORAGE_KEY = 'coalBlending_inputData';
-  const DEBOUNCE_MS = 250;
-  let timer = null;
-
-  function collectState(){
-    const rows = [];
-    // we assume 3 coal rows as in your file (coalName1..3). Adjust if you have more.
-    for (let r = 1; r <= 3; r++){
-      const coalEl = document.getElementById(`coalName${r}`) || document.getElementById(`coalDrop${r}`);
-      const coalName = coalEl ? coalEl.value : '';
-      const percentages = [];
-      for (let m = 0; m < 6; m++){
-        const p = document.querySelector(`.percentage-input[data-row="${r}"][data-mill="${m}"]`);
-        percentages.push(p ? (p.value || '') : '');
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
       }
-      const gcvEl = document.getElementById(`gcvBox${r}`);
-      const gcvVal = gcvEl ? (gcvEl.value !== undefined ? gcvEl.value : gcvEl.textContent) : '';
-      const costEl = document.getElementById(`costBox${r}`);
-      const costVal = costEl ? (costEl.value || '') : '';
-      rows.push({ coal: coalName, percentages, gcv: gcvVal, cost: costVal });
-    }
-
-    // collect flows (6 mills)
-    const flows = [];
-    const flowEls = document.querySelectorAll('.flow-input');
-    flowEls.forEach(f => flows.push(f.value || ''));
-
-    // generation if present
-    const genEl = document.getElementById('generation');
-    const generation = genEl ? (genEl.value || '') : '';
-
-    return { rows, flows, generation, ts: Date.now() };
-  }
-
-  function saveState(){
-    const state = collectState();
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    } catch(e){ console.error('Cannot save input state', e); }
-  }
-
-  function debounceSave(){
-    clearTimeout(timer);
-    timer = setTimeout(saveState, DEBOUNCE_MS);
-  }
-
-  // attach listeners to inputs/selects present on the page
-  function attach(){
-    const els = Array.from(document.querySelectorAll('input[type="text"], input[type="number"], textarea, select'));
-    els.forEach(el => {
-      el.addEventListener('input', debounceSave, {passive:true});
-      el.addEventListener('change', debounceSave, {passive:true});
+      pdf.save("Coal_Blending_Ratio.pdf");
     });
-    // initial save
-    saveState();
-  }
-
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', attach);
-  else attach();
-})();
+  });
 </script>
+
+<!-- external JS (replace with the updated input.js below) -->
 <script src="/public/input.js"></script>
 
 </body>
 </html>
-
