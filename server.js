@@ -1,19 +1,26 @@
-// server.js (minimal)
+// server.js (complete)
+// Requirements: dotenv, express, mongoose, cors, multer, xlsx
 require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
+const multer = require('multer');
+const xlsx = require('xlsx');
 
 const app = express();
+
+// Middleware - apply early
+app.use(cors());
+app.use(express.json());
+
+// Serve static files from project root (so /public/input.html works)
 app.use(express.static(path.join(__dirname)));
 
+// Root route returning your input.html in public/
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, '/public/input.html'));
 });
-
-app.use(cors());
-app.use(express.json());
 
 const MONGO_URI = process.env.MONGO_URI;
 if (!MONGO_URI) {
@@ -28,8 +35,30 @@ mongoose.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
     process.exit(1);
   });
 
-const RowSchema = new mongoose.Schema({
+/* -------------------- Coal model -------------------- */
+const CoalSchema = new mongoose.Schema({
   coal: String,
+  SiO2: Number,
+  Al2O3: Number,
+  Fe2O3: Number,
+  CaO: Number,
+  MgO: Number,
+  Na2O: Number,
+  K2O: Number,
+  TiO2: Number,
+  SO3: Number,
+  P2O5: Number,
+  Mn3O4: Number,
+  SulphurS: Number,
+  gcv: Number,
+  cost: Number
+}, { collection: 'coals' }); // optional explicit collection name
+
+const Coal = mongoose.model('Coal', CoalSchema);
+
+/* -------------------- Blend model (rows + computed fields) -------------------- */
+const RowSchema = new mongoose.Schema({
+  coal: String,           // can be coal name or coal _id (string)
   percentages: [Number],
   gcv: Number,
   cost: Number
@@ -39,38 +68,315 @@ const BlendSchema = new mongoose.Schema({
   rows: [RowSchema],
   flows: [Number],
   generation: Number,
+
+  // computed fields
+  totalFlow: { type: Number, default: 0 },
+  avgGCV: { type: Number, default: 0 },
+  avgAFT: { type: Number, default: null },
+  heatRate: { type: Number, default: null },
+  costRate: { type: Number, default: 0 },
+  aftPerMill: { type: [Number], default: [] },           // length = 6
+  blendedGCVPerMill: { type: [Number], default: [] },    // length = 6
+
   createdAt: { type: Date, default: Date.now }
 });
 
 const Blend = mongoose.model('Blend', BlendSchema);
 
+/* -------------------- Upload (Excel -> Coal collection) -------------------- */
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage });
+
+app.post('/api/upload-coal', upload.single('file'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+
+    const workbook = xlsx.read(req.file.buffer, { type: 'buffer' });
+    const sheetName = workbook.SheetNames[0];
+    const worksheet = workbook.Sheets[sheetName];
+    const jsonData = xlsx.utils.sheet_to_json(worksheet);
+
+    const coalData = jsonData.map(item => ({
+      coal: item['Coal'] || item['coal'] || item['Name'] || '',
+      SiO2: item['SiO2'] || item['SiO₂'] || 0,
+      Al2O3: item['Al2O3'] || item['Al₂O₃'] || 0,
+      Fe2O3: item['Fe2O3'] || item['Fe₂O₃'] || 0,
+      CaO: item['CaO'] || 0,
+      MgO: item['MgO'] || 0,
+      Na2O: item['Na2O'] || 0,
+      K2O: item['K2O'] || 0,
+      TiO2: item['TiO2'] || 0,
+      SO3: item['SO3'] || 0,
+      P2O5: item['P2O5'] || 0,
+      Mn3O4: item['Mn3O4'] || item['MN3O4'] || 0,
+      SulphurS: item['Sulphur'] || item['SulphurS'] || 0,
+      gcv: item['GCV'] || item['gcv'] || 0,
+      cost: item['Cost'] || item['cost'] || 0
+    }));
+
+    // Optional: remove existing coals and insert new set
+    await Coal.deleteMany();
+    await Coal.insertMany(coalData);
+
+    return res.json({ message: 'Coal data uploaded and saved to DB successfully' });
+  } catch (err) {
+    console.error('Error uploading coal data:', err);
+    return res.status(500).json({ error: 'Failed to process Excel file' });
+  }
+});
+
+/* -------------------- Coal GET endpoints (client expects these) -------------------- */
+app.get('/api/coal', async (req, res) => {
+  try {
+    const items = await Coal.find().lean();
+    return res.json(items);
+  } catch (err) {
+    console.error('GET /api/coal error:', err);
+    return res.status(500).json({ error: err.message || 'Server error' });
+  }
+});
+app.get('/api/coals', async (req, res) => {
+  try {
+    const items = await Coal.find().lean();
+    return res.json(items);
+  } catch (err) {
+    console.error('GET /api/coals error:', err);
+    return res.status(500).json({ error: err.message || 'Server error' });
+  }
+});
+app.get('/api/coal/list', async (req, res) => {
+  try {
+    const items = await Coal.find().lean();
+    return res.json(items);
+  } catch (err) {
+    console.error('GET /api/coal/list error:', err);
+    return res.status(500).json({ error: err.message || 'Server error' });
+  }
+});
+app.get('/api/coalnames', async (req, res) => {
+  try {
+    // minimal payload: _id and coal name
+    const items = await Coal.find({}, { coal: 1 }).lean();
+    return res.json(items);
+  } catch (err) {
+    console.error('GET /api/coalnames error:', err);
+    return res.status(500).json({ error: err.message || 'Server error' });
+  }
+});
+
+/* -------------------- Server-side AFT formula -------------------- */
+function calcAFT(ox) {
+  // ox: { SiO2, Al2O3, Fe2O3, CaO, MgO, Na2O, K2O, SO3, TiO2 }
+  const total = Object.keys(ox || {}).reduce((s, k) => s + (Number(ox[k]) || 0), 0);
+  if (total === 0) return 0;
+  const SiO2 = Number(ox.SiO2) || 0;
+  const Al2O3 = Number(ox.Al2O3) || 0;
+  const Fe2O3 = Number(ox.Fe2O3) || 0;
+  const CaO = Number(ox.CaO) || 0;
+  const MgO = Number(ox.MgO) || 0;
+  const Na2O = Number(ox.Na2O) || 0;
+  const K2O = Number(ox.K2O) || 0;
+  const SO3 = Number(ox.SO3) || 0;
+  const TiO2 = Number(ox.TiO2) || 0;
+
+  const sum = SiO2 + Al2O3;
+  let aft = 0;
+  if (sum < 55) {
+    aft = 1245 + (1.1 * SiO2) + (0.95 * Al2O3) - (2.5 * Fe2O3) - (2.98 * CaO) - (4.5 * MgO)
+      - (7.89 * (Na2O + K2O)) - (1.7 * SO3) - (0.63 * TiO2);
+  } else if (sum < 75) {
+    aft = 1323 + (1.45 * SiO2) + (0.683 * Al2O3) - (2.39 * Fe2O3) - (3.1 * CaO) - (4.5 * MgO)
+      - (7.49 * (Na2O + K2O)) - (2.1 * SO3) - (0.63 * TiO2);
+  } else {
+    aft = 1395 + (1.2 * SiO2) + (0.9 * Al2O3) - (2.5 * Fe2O3) - (3.1 * CaO) - (4.5 * MgO)
+      - (7.2 * (Na2O + K2O)) - (1.7 * SO3) - (0.63 * TiO2);
+  }
+  return Number(aft);
+}
+
+/* -------------------- compute blend metrics -------------------- */
+async function computeBlendMetrics(rows, flows, generation) {
+  // rows: array length 3 (expected), flows: array length 6
+  const oxKeys = ["SiO2","Al2O3","Fe2O3","CaO","MgO","Na2O","K2O","SO3","TiO2"];
+
+  // Load all coal docs once (small collection expected). For large DB you can fetch only needed ones.
+  const allCoals = await Coal.find().lean();
+  const byId = {};
+  const byNameLower = {};
+  allCoals.forEach(c => {
+    if (c._id) byId[String(c._id)] = c;
+    if (c.coal) byNameLower[String(c.coal).toLowerCase()] = c;
+  });
+
+  function findCoalRef(ref) {
+    if (!ref) return null;
+    // try by id
+    if (byId[String(ref)]) return byId[String(ref)];
+    // try by name (case-insensitive)
+    const lower = String(ref).toLowerCase();
+    if (byNameLower[lower]) return byNameLower[lower];
+    return null;
+  }
+
+  // compute blended GCV and oxides per mill
+  const blendedGCVPerMill = [];
+  const aftPerMill = [];
+
+  for (let m = 0; m < 6; m++) {
+    let blendedGCV = 0;
+    const ox = {};
+    oxKeys.forEach(k => ox[k] = 0);
+
+    for (let i = 0; i < (rows ? rows.length : 0); i++) {
+      const row = rows[i] || {};
+      const perc = (Array.isArray(row.percentages) && row.percentages[m]) ? Number(row.percentages[m]) : 0;
+      const weight = perc / 100;
+
+      const coalDoc = findCoalRef(row.coal);
+
+      // gcv from row (explicit) preferred, else from coal doc
+      const gcvVal = (row.gcv !== undefined && row.gcv !== null && row.gcv !== '') ? Number(row.gcv) : (coalDoc ? (Number(coalDoc.gcv) || 0) : 0);
+      blendedGCV += gcvVal * weight;
+
+      // accumulate oxides from coalDoc if present, else from row properties (if provided)
+      if (coalDoc) {
+        oxKeys.forEach(k => {
+          ox[k] += (Number(coalDoc[k]) || 0) * weight;
+        });
+      } else {
+        oxKeys.forEach(k => {
+          if (row[k] !== undefined && row[k] !== null && row[k] !== '') {
+            ox[k] += (Number(row[k]) || 0) * weight;
+          }
+        });
+      }
+    } // end rows loop
+
+    blendedGCVPerMill.push(Number(blendedGCV));
+
+    const oxTotal = Object.values(ox).reduce((s, v) => s + (Number(v) || 0), 0);
+    const aftVal = (oxTotal === 0) ? null : Number(calcAFT(ox));
+    aftPerMill.push(aftVal);
+  }
+
+  // totals & weighted averages using flows
+  let totalFlow = 0;
+  let weightedGCV = 0;
+  let weightedAFT = 0;
+  let contributedAFTFlow = 0;
+
+  for (let m = 0; m < 6; m++) {
+    const flow = (Array.isArray(flows) && flows[m]) ? Number(flows[m]) : 0;
+    totalFlow += flow;
+    weightedGCV += flow * (blendedGCVPerMill[m] || 0);
+
+    const aftVal = aftPerMill[m];
+    if (aftVal !== null && !isNaN(aftVal)) {
+      weightedAFT += flow * aftVal;
+      contributedAFTFlow += flow;
+    }
+  }
+
+  const avgGCV = totalFlow > 0 ? (weightedGCV / totalFlow) : 0;
+  const avgAFT = contributedAFTFlow > 0 ? (weightedAFT / contributedAFTFlow) : null;
+  const heatRate = (generation && generation > 0 && totalFlow > 0) ? ((totalFlow * avgGCV) / generation) : null;
+
+  // compute cost rate similar to client: cost weighted by sum of percentages per row
+  function rowQtySum(row) {
+    if (!row || !Array.isArray(row.percentages)) return 0;
+    return row.percentages.reduce((s, v) => s + (Number(v) || 0), 0);
+  }
+  const qtyPerRow = (rows || []).map(rowQtySum);
+  const costPerRow = (rows || []).map((r, idx) => {
+    if (r && r.cost !== undefined && r.cost !== null && r.cost !== '') return Number(r.cost) || 0;
+    const cdoc = findCoalRef((r || {}).coal);
+    return cdoc ? (Number(cdoc.cost) || 0) : 0;
+  });
+
+  let totalCost = 0, totalQty = 0;
+  for (let i = 0; i < qtyPerRow.length; i++) {
+    totalCost += (qtyPerRow[i] || 0) * (costPerRow[i] || 0);
+    totalQty += (qtyPerRow[i] || 0);
+  }
+  const costRate = totalQty > 0 ? (totalCost / totalQty) : 0;
+
+  return {
+    totalFlow: Number(totalFlow),
+    avgGCV: Number(avgGCV),
+    avgAFT: (avgAFT === null ? null : Number(avgAFT)),
+    heatRate: (heatRate === null ? null : Number(heatRate)),
+    costRate: Number(costRate),
+    aftPerMill: aftPerMill.map(v => (v === null ? null : Number(v))),
+    blendedGCVPerMill: blendedGCVPerMill.map(v => Number(v))
+  };
+}
+
+/* -------------------- Blend endpoints (create / update / latest) -------------------- */
+/**
+ * Create a new Blend document; compute metrics server-side and store them.
+ * Body: { rows: [...], flows: [...], generation: number }
+ */
+// ---------------------- POST /api/blend (create + save with coal NAMES) ----------------------
 app.post('/api/blend', async (req, res) => {
   try {
     const { rows, flows, generation } = req.body;
     if (!Array.isArray(rows) || !Array.isArray(flows)) {
       return res.status(400).json({ error: 'Invalid payload: rows[] and flows[] required' });
     }
-    const doc = new Blend({ rows, flows, generation });
+
+    // load coal docs once and build lookup maps
+    const allCoals = await Coal.find().lean();
+    const byId = {};
+    const byNameLower = {};
+    allCoals.forEach(c => {
+      if (c._id) byId[String(c._id)] = c;
+      if (c.coal) byNameLower[String(c.coal).toLowerCase()] = c;
+    });
+
+    // resolve each row.coal to the coal name (if it's an id or name)
+    const rowsToSave = (rows || []).map(row => {
+      const copy = Object.assign({}, row);
+      const ref = (row && row.coal) ? String(row.coal) : '';
+      let resolvedName = null;
+      if (ref) {
+        if (byId[ref]) resolvedName = byId[ref].coal;
+        else if (byNameLower[ref.toLowerCase()]) resolvedName = byNameLower[ref.toLowerCase()].coal;
+      }
+      copy.coal = resolvedName || copy.coal || ''; // store name if found, else leave as-is
+      // ensure percentages are numbers (optional but tidy)
+      if (Array.isArray(copy.percentages)) {
+        copy.percentages = copy.percentages.map(v => Number(v) || 0);
+      } else {
+        copy.percentages = [0,0,0,0,0,0];
+      }
+      copy.gcv = (copy.gcv !== undefined && copy.gcv !== null) ? Number(copy.gcv) : 0;
+      copy.cost = (copy.cost !== undefined && copy.cost !== null) ? Number(copy.cost) : 0;
+      return copy;
+    });
+
+    // compute metrics server-side using the name-resolved rows
+    const metrics = await computeBlendMetrics(rowsToSave, flows, generation);
+
+    // create and save blend
+    const doc = new Blend(Object.assign({}, {
+      rows: rowsToSave,
+      flows,
+      generation
+    }, metrics));
+
     await doc.save();
-    res.status(201).json({ message: 'Saved', id: doc._id });
+    return res.status(201).json({ message: 'Saved', id: doc._id });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: err.message });
+    console.error('POST /api/blend error:', err);
+    return res.status(500).json({ error: err.message || 'Server error' });
   }
 });
 
-app.get('/api/blend/latest', async (req, res) => {
-  try {
-    const latest = await Blend.findOne().sort({ createdAt: -1 }).lean();
-    if (!latest) return res.status(404).json({ error: 'No blends found' });
-    res.json(latest);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: err.message });
-  }
-});
 
-// update blend by ID
+/**
+ * Update existing Blend by ID; recompute metrics and save
+ */
+// ---------------------- PUT /api/blend/:id (update + save with coal NAMES) ----------------------
 app.put('/api/blend/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -79,22 +385,79 @@ app.put('/api/blend/:id', async (req, res) => {
       return res.status(400).json({ error: 'Invalid payload: rows[] and flows[] required' });
     }
 
+    // load coal docs once and build lookup maps
+    const allCoals = await Coal.find().lean();
+    const byId = {};
+    const byNameLower = {};
+    allCoals.forEach(c => {
+      if (c._id) byId[String(c._id)] = c;
+      if (c.coal) byNameLower[String(c.coal).toLowerCase()] = c;
+    });
+
+    // resolve each row.coal to the coal name (if it's an id or name)
+    const rowsToSave = (rows || []).map(row => {
+      const copy = Object.assign({}, row);
+      const ref = (row && row.coal) ? String(row.coal) : '';
+      let resolvedName = null;
+      if (ref) {
+        if (byId[ref]) resolvedName = byId[ref].coal;
+        else if (byNameLower[ref.toLowerCase()]) resolvedName = byNameLower[ref.toLowerCase()].coal;
+      }
+      copy.coal = resolvedName || copy.coal || '';
+      if (Array.isArray(copy.percentages)) {
+        copy.percentages = copy.percentages.map(v => Number(v) || 0);
+      } else {
+        copy.percentages = [0,0,0,0,0,0];
+      }
+      copy.gcv = (copy.gcv !== undefined && copy.gcv !== null) ? Number(copy.gcv) : 0;
+      copy.cost = (copy.cost !== undefined && copy.cost !== null) ? Number(copy.cost) : 0;
+      return copy;
+    });
+
+    // compute metrics server-side using the name-resolved rows
+    const metrics = await computeBlendMetrics(rowsToSave, flows, generation);
+
+    // update the document (replace rows with name-resolved rows + metrics)
     const updated = await Blend.findByIdAndUpdate(
       id,
-      { rows, flows, generation, ts: Date.now() },
+      Object.assign({}, { rows: rowsToSave, flows, generation }, metrics),
       { new: true }
     );
 
     if (!updated) return res.status(404).json({ error: 'Blend not found' });
 
-    res.json({ message: 'Updated', id: updated._id });
+    return res.json({ message: 'Updated', id: updated._id });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: err.message });
+    console.error('PUT /api/blend/:id error:', err);
+    return res.status(500).json({ error: err.message || 'Server error' });
   }
 });
 
 
+/**
+ * Return the latest Blend document (most recent createdAt)
+ */
+app.get('/api/blend/latest', async (req, res) => {
+  try {
+    const latest = await Blend.findOne().sort({ createdAt: -1 }).lean();
+    if (!latest) return res.status(404).json({ error: 'No blends found' });
+    return res.json(latest);
+  } catch (err) {
+    console.error('GET /api/blend/latest error:', err);
+    return res.status(500).json({ error: err.message || 'Server error' });
+  }
+});
+
+/* -------------------- Optional helper endpoints for debugging -------------------- */
+app.get('/api/coal/count', async (req, res) => {
+  try {
+    const c = await Coal.countDocuments();
+    return res.json({ count: c });
+  } catch (err) {
+    return res.status(500).json({ error: err.message || 'Server error' });
+  }
+});
+
+/* -------------------- Start server -------------------- */
 const PORT = process.env.PORT || 5000;
-//const path = require('path');
-app.listen(PORT, ()=>console.log(`Server listening on ${PORT}`));
+app.listen(PORT, () => console.log(`Server listening on ${PORT}`));
